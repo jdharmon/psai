@@ -17,7 +17,7 @@ function Invoke-PsaiSuggestion {
         $suggestion = Get-PsaiOpenAIResponse -Query $Query -Context $context
 
         if ($suggestion) {
-            Write-Progress -Activity $ActivityName -Status "Success! Updating terminal." -Completed
+            Write-Progress -Activity $ActivityName -Status "Success! Updating terminal."
             $buffer = ""
             $cursor = 0
             [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$buffer, [ref]$cursor)
@@ -27,11 +27,10 @@ function Invoke-PsaiSuggestion {
             Write-Progress -Activity $ActivityName -Status "Warning: AI returned an empty response."
         }
     } catch {
-        Write-Error -Activity $ActivityName -Status $_.Exception.Message -Completed
+        Write-Progress -Activity $ActivityName -Status "ERROR: $($_.Exception.Message)"
     } finally {
-        Write-Progress $ActivityName -Completed
+        Write-Progress -Activity $ActivityName -Completed
     }
-
 }
 
 # Trigger: Enter key interception
