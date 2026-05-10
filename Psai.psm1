@@ -2,31 +2,36 @@
 . "$PSScriptRoot/lib/Context.ps1"
 . "$PSScriptRoot/lib/providers/OpenAI.ps1"
 
+$ActivityName = "PowerShell AI"
+
 function Invoke-PsaiSuggestion {
     param ([string]$Query)
+
     
-    # Use direct console output to bypass PSReadLine swallowing
-    [console]::WriteLine("`n[psai] Thinking about: '$Query'...")
     
     try {
+        Write-Progress -Activity $ActivityName -Status "Gathering context..."
         $context = Get-PsaiContext
-        [console]::WriteLine("[psai] Context gathered. Contacting AI at $env:PSAI_OPENAI_URL...")
-        
+
+        Write-Progress -Activity $ActivityName -Status "Contacting AI at $env:PSAI_OPENAI_URL..."
         $suggestion = Get-PsaiOpenAIResponse -Query $Query -Context $context
 
         if ($suggestion) {
-            [console]::WriteLine("[psai] Success! Updating terminal.")
+            Write-Progress -Activity $ActivityName -Status "Success! Updating terminal." -Completed
             $buffer = ""
             $cursor = 0
             [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$buffer, [ref]$cursor)
             [Microsoft.PowerShell.PSConsoleReadLine]::Delete(0, $buffer.Length)
             [Microsoft.PowerShell.PSConsoleReadLine]::Insert($suggestion)
         } else {
-            [console]::WriteLine("[psai] Warning: AI returned an empty response.")
+            Write-Progress -Activity $ActivityName -Status "Warning: AI returned an empty response."
         }
     } catch {
-        [console]::WriteLine("[psai] ERROR: $($_.Exception.Message)")
+        Write-Error -Activity $ActivityName -Status $_.Exception.Message -Completed
+    } finally {
+        Write-Progress $ActivityName -Completed
     }
+
 }
 
 # Trigger: Enter key interception

@@ -19,11 +19,4 @@ The following environment variables are mandatory for the module to function:
   - A snapshot of the first 10 files in the current directory.
 - **AI Constraints**: The system prompt requires the AI to return **raw PowerShell commands only**. It must exclude markdown formatting (backticks) and explanations to allow for direct injection into the terminal buffer.
 - **Terminal Injection**: Suggestions are injected into the buffer using `[Microsoft.PowerShell.PSConsoleReadLine]::Insert($suggestion)`.
-- **Output Handling**: Status messages use `[console]::WriteLine` to bypass `PSReadLine` swallowing, ensuring the user sees "Thinking..." or "Success!" messages.
-
-## Verification & Testing 🧪
-| Step | Action | Expected Result |
-|---|---|---|
-| **Reload** | `Import-Module ./Psai.psd1 -Force` | The module reloads with all latest logic and library changes. |
-| **Trigger** | Type `# list all files` and press `Enter`. | The comment is replaced by `Get-ChildItem` (or similar). |
-| **Check Logs** | Observe `[psai]` prefixed lines. | Indicates the context was gathered and the API was contacted successfully. |
+- **Output Handling**: Status messages use `Write-Progress` to provide native PowerShell feedback, ensuring the user sees "Thinking..." or "Success!" messages in the progress bar.
