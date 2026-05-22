@@ -4,9 +4,14 @@ function Get-PsaiOpenAIResponse {
         [string]$Context
     )
 
-    $url = if ($env:PSAI_OPENAI_URL) { $env:PSAI_OPENAI_URL } else { "https://api.openai.com/v1/chat/completions" }
-    $apiKey = if ($env:PSAI_OPENAI_API_KEY) { $env:PSAI_OPENAI_API_KEY } else { $env:OPENAI_API_KEY }
-    $model = if ($env:PSAI_OPENAI_MODEL) { $env:PSAI_OPENAI_MODEL } else { "gpt-4o" }
+    $config = Get-PsaiOpenAIConfig
+    $url = $config.Url
+    $apiKey = $config.ApiKey
+    $model = $config.Model
+
+    if (-not $apiKey -and $url -eq "https://api.openai.com/v1/chat/completions") {
+        throw "Missing OpenAI API key. Set PSAI_OPENAI_KEY or OPENAI_API_KEY."
+    }
 
     $systemPrompt = Get-PsaiSystemPrompt -Context $Context
 
@@ -20,7 +25,7 @@ function Get-PsaiOpenAIResponse {
         )
         temperature = 0.0
         max_tokens = 100
-    } | ConvertTo-Json
+    } | ConvertTo-Json -Depth 10
 
     $headers = @{
         "Content-Type" = "application/json"
@@ -29,18 +34,23 @@ function Get-PsaiOpenAIResponse {
         $headers["Authorization"] = "Bearer $apiKey"
     }
 
-    $response = Invoke-RestMethod -Method Post -Uri $url -Headers $headers -Body $body -ErrorAction Stop
-    
-    if ($response.choices) {
-        $rawText = $response.choices[0].message.content.Trim()
-        
-        # Sanitization: Strip backticks and conversational fluff
-        $rawText = $rawText -replace '^```(powershell|pwsh)?\s*', ''
-        $rawText = $rawText -replace '\s*```$', ''
-        $rawText = $rawText -replace '(?i)^(here is your command:|the command is:|sure, here you go:)', ''
-        
-        return $rawText.Trim()
+    try {
+        $response = Invoke-RestMethod -Method Post -Uri $url -Headers $headers -Body $body -ErrorAction Stop
+    } catch {
+        $message = $_.Exception.Message
+        if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+            $message = $_.ErrorDetails.Message
+        }
+        throw "OpenAI API request failed: $message"
     }
     
-    throw "Malformed API response."
+    if ($response.error -and $response.error.message) {
+        throw "OpenAI API error: $($response.error.message)"
+    }
+
+    if ($response.choices -and $response.choices[0].message.content) {
+        return ConvertFrom-PsaiSuggestionText -Text $response.choices[0].message.content
+    }
+    
+    throw "Malformed OpenAI API response."
 }

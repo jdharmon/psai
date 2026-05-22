@@ -11,7 +11,7 @@
 | **Comment Trigger** | Type a query starting with `#` and press Enter to get an AI suggestion. |
 | **Context-Aware** | Uses your current directory, terminal history, and system info to ground suggestions. |
 | **Buffer Injection** | Suggestions are injected directly into your terminal line via `PSReadLine`. |
-| **Extensible** | Compatible with any OpenAI-compatible API provider. |
+| **Extensible** | Supports OpenAI-compatible providers and Gemini Developer API. |
 
 ---
 
@@ -34,13 +34,35 @@ To install and use Psai in your current session:
 
 ## Configuration ⚙️
 
-Psai relies on environment variables for API communication. Ensure the following are set in your profile or session:
+Psai relies on environment variables for API communication. `PSAI_PROVIDER` is optional. When it is not set, Psai automatically selects OpenAI first when OpenAI configuration exists, then Gemini when Gemini configuration exists.
 
 | Environment Variable | Description |
 |---|---|
-| `PSAI_OPENAI_KEY` | Your API authentication key. |
-| `PSAI_OPENAI_URL` | The API completion endpoint URL. |
-| `PSAI_OPENAI_MODEL` | The specific model name to be used (e.g., `gpt-4o`). |
+| `PSAI_PROVIDER` | Optional provider override. Use `openai` or `gemini`. |
+| `PSAI_OPENAI_KEY` | OpenAI API key. Falls back to `OPENAI_API_KEY`. |
+| `PSAI_OPENAI_URL` | OpenAI-compatible completion endpoint. Defaults to `https://api.openai.com/v1/chat/completions`. |
+| `PSAI_OPENAI_MODEL` | OpenAI model name. Defaults to `gpt-4o`. |
+| `PSAI_GEMINI_KEY` | Gemini API key. Falls back to `GEMINI_API_KEY`. |
+| `PSAI_GEMINI_MODEL` | Gemini model name. Defaults to `gemini-2.5-flash`. |
+| `PSAI_GEMINI_URL` | Optional Gemini `generateContent` endpoint template. Defaults to the Gemini Developer API URL. |
+
+### OpenAI setup
+
+```powershell
+$env:PSAI_OPENAI_KEY = "your-openai-key"
+# Optional:
+$env:PSAI_PROVIDER = "openai"
+$env:PSAI_OPENAI_MODEL = "gpt-4o"
+```
+
+### Gemini setup
+
+```powershell
+$env:PSAI_GEMINI_KEY = "your-gemini-key"
+# Optional:
+$env:PSAI_PROVIDER = "gemini"
+$env:PSAI_GEMINI_MODEL = "gemini-2.5-flash"
+```
 
 ---
 
@@ -69,4 +91,5 @@ Psai integrates seamlessly with your typing flow:
 | Task | Command |
 |---|---|
 | **Reload Module** | `Import-Module ./Psai.psd1 -Force` |
+| **Run Tests** | `pwsh -NoProfile -File ./tests/Provider.Tests.ps1` |
 | **Verify Trigger** | Type `# hello` and press `Enter` |

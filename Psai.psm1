@@ -1,6 +1,7 @@
 . "$PSScriptRoot/lib/Utils.ps1"
 . "$PSScriptRoot/lib/Context.ps1"
 . "$PSScriptRoot/lib/providers/OpenAI.ps1"
+. "$PSScriptRoot/lib/providers/Gemini.ps1"
 
 $ActivityName = "PowerShell AI"
 
@@ -13,8 +14,13 @@ function Invoke-PsaiSuggestion {
         Write-Progress -Activity $ActivityName -Status "Gathering context..."
         $context = Get-PsaiContext
 
-        Write-Progress -Activity $ActivityName -Status "Contacting AI at $env:PSAI_OPENAI_URL..."
-        $suggestion = Get-PsaiOpenAIResponse -Query $Query -Context $context
+        $provider = Resolve-PsaiProvider
+
+        Write-Progress -Activity $ActivityName -Status "Contacting $provider provider..."
+        $suggestion = switch ($provider) {
+            "openai" { Get-PsaiOpenAIResponse -Query $Query -Context $context }
+            "gemini" { Get-PsaiGeminiResponse -Query $Query -Context $context }
+        }
 
         if ($suggestion) {
             Write-Progress -Activity $ActivityName -Status "Success! Updating terminal."
